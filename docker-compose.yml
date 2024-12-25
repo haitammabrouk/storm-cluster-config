@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  zookeeper:
+    image: zookeeper:3.8
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper:2888:3888;2181
+
+  nimbus:
+    image: storm:2.4.0
+    command: storm nimbus
+    depends_on:
+      - zookeeper
+    ports:
+      - "6627:6627"
+    environment:
+      STORM_ZOOKEEPER_SERVERS: zookeeper
+
+  supervisor:
+    image: storm:2.4.0
+    command: storm supervisor
+    depends_on:
+      - nimbus
+      - zookeeper
+    environment:
+      STORM_ZOOKEEPER_SERVERS: zookeeper
+      STORM_NIMBUS_SEEDS: nimbus
+
+  ui:
+    image: storm:2.4.0
+    command: storm ui
+    depends_on:
+      - nimbus
+    ports:
+      - "8080:8080"
+    environment:
+      STORM_ZOOKEEPER_SERVERS: zookeeper
+      STORM_NIMBUS_SEEDS: nimbus
